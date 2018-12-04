@@ -3,6 +3,7 @@
     package="com.github.arekolek.phone">
 
     <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".App"

@@ -10,20 +10,21 @@ object OngoingCall {
 
     private val callback = object : Call.Callback() {
         override fun onStateChanged(call: Call, newState: Int) {
+            println("OngoingCall onStateChanged " + newState)
             Timber.d(call.toString())
             state.onNext(newState)
         }
     }
 
     var call: Call? = null
-        set(value) {
-            field?.unregisterCallback(callback)
-            value?.let {
-                it.registerCallback(callback)
-                state.onNext(it.state)
-            }
-            field = value
+    set(value) {
+        field?.unregisterCallback(callback)
+        value?.let {
+            it.registerCallback(callback)
+            state.onNext(it.state)
         }
+        field = value
+    }
 
     fun answer() {
         call!!.answer(VideoProfile.STATE_AUDIO_ONLY)
