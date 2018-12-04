@@ -1,4 +1,4 @@
-package com.github.arekolek.phone
+package tech.vessels.relay
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -6,8 +6,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.telecom.Call
+import android.widget.Toast
 import androidx.core.view.isVisible
 import com.github.kittinunf.fuel.Fuel
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import kotlinx.android.synthetic.main.activity_call.*
@@ -17,27 +20,66 @@ class CallActivity : AppCompatActivity() {
 
     private val disposables = CompositeDisposable()
 
+    private lateinit var remoteConfig: FirebaseRemoteConfig
+
     private lateinit var number: String
     private var callCount: Int = 0
+
     private lateinit var urlString: String
     private lateinit var triggerUrlString: String
     private lateinit var botId: String
-    private var waitTime: Int = 10
+    private var waitTime: Double = 10.00
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_call)
 
-        number = intent.data.schemeSpecificPart
-        println(intent.data)
+        remoteConfig = FirebaseRemoteConfig.getInstance()
+        val configSettings = FirebaseRemoteConfigSettings.Builder()
+                .setDeveloperModeEnabled(BuildConfig.DEBUG)
+                .build()
+        remoteConfig.setConfigSettings(configSettings)
+        remoteConfig.setDefaults(R.xml.remote_config_defaults)
 
+        number = intent.data.schemeSpecificPart
         //TODO: load these from remote config
-        urlString = "https://lwilld3.localtunnel.me/tz-phone-book-dev/us-central1/twiml/triggerCallFromRelay?temporaryInsecureAuthKey=xP6mXwOpuJTYzs2Enxi"
-        triggerUrlString = "https://us-central1-tz-phone-book-dev.cloudfunctions.net/twiml/entrypoint"
-        botId = "voicebook"
-        waitTime = 10
+//        urlString = "https://lwilld3.localtunnel.me/tz-phone-book-dev/us-central1/twiml/triggerCallFromRelay?temporaryInsecureAuthKey=xP6mXwOpuJTYzs2Enxi"
+//        triggerUrlString = "https://us-central1-tz-phone-book-dev.cloudfunctions.net/twiml/entrypoint"
+//        botId = "voicebook"
+//        waitTime = 10
 
 //        callCount = 0 //TODO: get from saved data somwhere
+
+        updateRemoteConfig()
+        loadValues()
+    }
+
+    private fun updateRemoteConfig() {
+        val isUsingDeveloperMode = remoteConfig.info.configSettings.isDeveloperModeEnabled
+        val cacheExpiration: Long = if (isUsingDeveloperMode) {
+            0
+        } else {
+            3600 // 1 hour in seconds.
+        }
+
+        remoteConfig.fetch(cacheExpiration)
+        .addOnCompleteListener(this) { task ->
+            if (task.isSuccessful) {
+                Toast.makeText(this, "Fetched new config", Toast.LENGTH_SHORT).show()
+                remoteConfig.activateFetched()
+            } else {
+                Toast.makeText(this, "Fetch Failed", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun loadValues() {
+        println("Loading new values")
+
+        urlString = remoteConfig.getString(URL_STRING)
+        triggerUrlString = remoteConfig.getString(TRIGGER_URL_STRING)
+        botId = remoteConfig.getString(BOT_ID)
+        waitTime = remoteConfig.getDouble(WAIT_TIME)
     }
 
     override fun onStart() {
@@ -131,5 +173,11 @@ class CallActivity : AppCompatActivity() {
                 .setData(call.details.handle)
                 .let(context::startActivity)
         }
+
+        private const val URL_STRING = "url_string"
+        private const val TRIGGER_URL_STRING = "trigger_url_string"
+        private const val BOT_ID = "bot_id"
+        private const val WAIT_TIME = "wait_time"
     }
+
 }

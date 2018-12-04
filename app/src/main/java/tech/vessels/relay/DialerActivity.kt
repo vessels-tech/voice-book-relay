@@ -1,5 +1,4 @@
-package com.github.arekolek.phone
-
+package tech.vessels.relay
 import android.Manifest.permission.CALL_PHONE
 import android.content.Intent
 import android.os.Bundle

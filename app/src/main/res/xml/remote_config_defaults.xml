@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- START xml_defaults -->
+<defaultsMap>
+    <entry>
+        <key>url_string</key>
+        <value>http://localhost:5000</value>
+    </entry>
+    <entry>
+        <key>trigger_url_string</key>
+        <value>http://localhost:5000</value>
+    </entry>
+    <entry>
+        <key>bot_id</key>
+        <value>voicebook</value>
+    </entry>
+    <entry>
+        <key>wait_time</key>
+        <value>10</value>
+    </entry>
+</defaultsMap>
+    <!-- END xml_defaults -->

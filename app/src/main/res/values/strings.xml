@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Simple Phone</string>
+    <string name="app_name">Voicebook Relay</string>
     <string name="call_input_hint">Call…</string>
 </resources>

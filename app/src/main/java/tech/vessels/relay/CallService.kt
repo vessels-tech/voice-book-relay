@@ -1,5 +1,4 @@
-package com.github.arekolek.phone
-
+package tech.vessels.relay
 import android.telecom.Call
 import android.telecom.InCallService
 
