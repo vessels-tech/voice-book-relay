@@ -36,8 +36,14 @@ class FirebaseApi {
             val currentCountTask = getCallCount(userId)
             return currentCountTask.addOnCompleteListener{ task: Task<DocumentSnapshot> ->
                 if (task.isSuccessful && task.result != null) {
-                    var currentCount = task.result?.data?.get("callCount").toString().toInt()
-                    currentCount += 1
+                    var currentCount = task.result?.data?.get("callCount")
+                    if (currentCount != null) {
+                        currentCount = currentCount.toString().toInt();
+                        currentCount += 1
+                    } else {
+                        currentCount = 1;
+                    }
+
 
                     val data = HashMap<String, Any>()
                     data["callCount"] = currentCount
@@ -47,6 +53,8 @@ class FirebaseApi {
 
                 } else {
                     println("Could not get the latest callCount")
+
+
                 }
             }
         }

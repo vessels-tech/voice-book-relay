@@ -83,6 +83,7 @@ class CallActivity : AppCompatActivity() {
             .addTo(disposables)
     }
 
+
     private fun loadValues() {
         Timber.d("Loading new values");
         urlString = remoteConfig.getString(URL_STRING)
@@ -128,20 +129,6 @@ class CallActivity : AppCompatActivity() {
         }
         userId = mobile
 
-//        user.getIdToken(true).addOnCompleteListener{
-//            task ->
-//            if (task.isSuccessful) {
-//                val tokenResult = task.result?.token
-//                if (tokenResult != null) {
-//                    token = tokenResult
-//                    return@addOnCompleteListener
-//                }
-//            }
-//
-//            Timber.d("Error loading token, ${task.exception}")
-//            Toast.makeText(this, "Could not load token", Toast.LENGTH_SHORT).show()
-//        }
-
         user.getIdToken(true).addOnCompleteListener{
             task ->
                 if (task.isSuccessful) {
@@ -180,9 +167,6 @@ class CallActivity : AppCompatActivity() {
      */
     fun sendHttpPost(token: String?) {
         val body = "{\"unformattedMobile\":\"$number\",\n \"url\":\"$triggerUrlString\",\n\"wait\": $waitTime,\n \"botId\":\"$botId\"}";
-//        val headers =  HashMap<String, Any>()
-//        headers["Authentication"] = "Bearer $token"
-
         if (token == null) {
             Toast.makeText(this, "Token could not be found", Toast.LENGTH_SHORT).show()
             return
@@ -194,13 +178,12 @@ class CallActivity : AppCompatActivity() {
             .timeout(60000)
             .jsonBody(body)
             .header(AUTHORIZATION to "Bearer $token")
-            .responseString { request, response, result ->
+            .responseString { _, _, result ->
             result.fold({ d ->
-                //TODO: toast
-                println("Success: $d")
+                Timber.d("Success: $d")
             }, { err ->
-                //TODO: toast
-                println("Error with request: $err")
+                Toast.makeText(this, "Error with request: $err", Toast.LENGTH_SHORT).show()
+                Timber.d("Error with request: $err")
             })
         }
     }

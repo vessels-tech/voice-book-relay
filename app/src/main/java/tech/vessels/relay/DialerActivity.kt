@@ -1,5 +1,6 @@
 package tech.vessels.relay
 import android.Manifest.permission.CALL_PHONE
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat.requestPermissions
@@ -9,9 +10,11 @@ import android.support.v7.app.AppCompatActivity
 import android.telecom.TelecomManager
 import android.telecom.TelecomManager.ACTION_CHANGE_DEFAULT_DIALER
 import android.telecom.TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME
+import android.widget.Toast
 import androidx.core.content.systemService
 import androidx.core.net.toUri
 import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.auth.IdpResponse
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -29,6 +32,7 @@ class DialerActivity : AppCompatActivity() {
     private lateinit var triggerUrlString: String
     private lateinit var botId: String
     private var waitTime: Double = 10.00
+    private lateinit var user: FirebaseUser
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,10 +46,11 @@ class DialerActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         //Check the login status
-        val user = FirebaseAuth.getInstance().currentUser
+        val currentUser = FirebaseAuth.getInstance().currentUser
 
 
-        if (user != null) {
+        if (currentUser != null) {
+            user = currentUser
            setUpUser(user)
         } else {
             // No user is signed in
@@ -56,6 +61,12 @@ class DialerActivity : AppCompatActivity() {
         offerReplacingDefaultDialer()
     }
 
+//    override fun onResume() {
+//        super.onResume()
+//
+//        setUpUser(user)
+//    }
+
     private fun setUpUser(user: FirebaseUser) {
         // User is signed in
         val mobile = user.phoneNumber
@@ -64,7 +75,7 @@ class DialerActivity : AppCompatActivity() {
         if (mobile != null) {
             val callCountTask = getCallCount(mobile);
             callCountTask.addOnCompleteListener{ task: Task<DocumentSnapshot> ->
-                if (task.isSuccessful && task.result != null) {
+                if (task.isSuccessful && task.result != null && task.result?.data?.get("callCount") != null) {
                     counter_label.text = task.result?.data?.get("callCount").toString()
                 } else {
                     println("Could not get the latest callCount")
@@ -89,6 +100,26 @@ class DialerActivity : AppCompatActivity() {
                 .setAvailableProviders(providers)
                 .build(),
             RC_SIGN_IN)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == RC_SIGN_IN) {
+            val response = IdpResponse.fromResultIntent(data)
+
+            if (resultCode == Activity.RESULT_OK) {
+                // Successfully signed in
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                if (currentUser != null) {
+                    user = currentUser
+                    setUpUser(user)
+                }
+            } else {
+                Toast.makeText(this, "You must sign in to continue.", Toast.LENGTH_SHORT).show()
+                createSignInIntent()
+            }
+        }
     }
 
 
