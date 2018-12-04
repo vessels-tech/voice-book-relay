@@ -8,12 +8,25 @@ import android.support.v7.app.AppCompatActivity
 import android.telecom.Call
 import android.widget.Toast
 import androidx.core.view.isVisible
+import com.firebase.ui.auth.AuthUI
 import com.github.kittinunf.fuel.Fuel
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
+import com.google.common.net.HttpHeaders.AUTHORIZATION
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
+import com.squareup.okhttp.Headers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import kotlinx.android.synthetic.main.activity_call.*
+import tech.vessels.relay.FirebaseApi.Companion.incrementCallCount
+import tech.vessels.relay.RemoteConfigApi.BOT_ID
+import tech.vessels.relay.RemoteConfigApi.TRIGGER_URL_STRING
+import tech.vessels.relay.RemoteConfigApi.URL_STRING
+import tech.vessels.relay.RemoteConfigApi.WAIT_TIME
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 class CallActivity : AppCompatActivity() {
@@ -25,6 +38,7 @@ class CallActivity : AppCompatActivity() {
     private lateinit var number: String
     private var callCount: Int = 0
 
+    private lateinit var userId: String
     private lateinit var urlString: String
     private lateinit var triggerUrlString: String
     private lateinit var botId: String
@@ -34,52 +48,11 @@ class CallActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_call)
 
-        remoteConfig = FirebaseRemoteConfig.getInstance()
-        val configSettings = FirebaseRemoteConfigSettings.Builder()
-                .setDeveloperModeEnabled(BuildConfig.DEBUG)
-                .build()
-        remoteConfig.setConfigSettings(configSettings)
-        remoteConfig.setDefaults(R.xml.remote_config_defaults)
-
         number = intent.data.schemeSpecificPart
-        //TODO: load these from remote config
-//        urlString = "https://lwilld3.localtunnel.me/tz-phone-book-dev/us-central1/twiml/triggerCallFromRelay?temporaryInsecureAuthKey=xP6mXwOpuJTYzs2Enxi"
-//        triggerUrlString = "https://us-central1-tz-phone-book-dev.cloudfunctions.net/twiml/entrypoint"
-//        botId = "voicebook"
-//        waitTime = 10
 
-//        callCount = 0 //TODO: get from saved data somwhere
-
-        updateRemoteConfig()
+        remoteConfig = RemoteConfigApi.getRemoteConfig()
+        RemoteConfigApi.updateRemoteConfig(this, remoteConfig)
         loadValues()
-    }
-
-    private fun updateRemoteConfig() {
-        val isUsingDeveloperMode = remoteConfig.info.configSettings.isDeveloperModeEnabled
-        val cacheExpiration: Long = if (isUsingDeveloperMode) {
-            0
-        } else {
-            3600 // 1 hour in seconds.
-        }
-
-        remoteConfig.fetch(cacheExpiration)
-        .addOnCompleteListener(this) { task ->
-            if (task.isSuccessful) {
-                Toast.makeText(this, "Fetched new config", Toast.LENGTH_SHORT).show()
-                remoteConfig.activateFetched()
-            } else {
-                Toast.makeText(this, "Fetch Failed", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun loadValues() {
-        println("Loading new values")
-
-        urlString = remoteConfig.getString(URL_STRING)
-        triggerUrlString = remoteConfig.getString(TRIGGER_URL_STRING)
-        botId = remoteConfig.getString(BOT_ID)
-        waitTime = remoteConfig.getDouble(WAIT_TIME)
     }
 
     override fun onStart() {
@@ -110,6 +83,15 @@ class CallActivity : AppCompatActivity() {
             .addTo(disposables)
     }
 
+    private fun loadValues() {
+        Timber.d("Loading new values");
+        urlString = remoteConfig.getString(URL_STRING)
+        triggerUrlString = remoteConfig.getString(TRIGGER_URL_STRING)
+        botId = remoteConfig.getString(BOT_ID)
+        waitTime = remoteConfig.getDouble(WAIT_TIME)
+    }
+
+
     @SuppressLint("SetTextI18n")
     private fun updateUi(state: Int) {
         callInfo.text = "${state.asString().toLowerCase().capitalize()}\n$number"
@@ -124,12 +106,65 @@ class CallActivity : AppCompatActivity() {
 
     fun hangupCall() {
         callCount += 1
-        println("Hanging up call from $number")
-        println("Callcount: $callCount")
+        Timber.d("Hanging up call from $number")
+        Timber.d("Callcount: $callCount")
         OngoingCall.hangup()
 
-        this.sendHttpPost()
+        signInDoStuff()
     }
+
+    private fun signInDoStuff()  {
+        println("Signing in and doing stuff")
+
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            Toast.makeText(this, "No user found. Can't forward calls.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val mobile = user.phoneNumber
+        if (mobile == null) {
+            Toast.makeText(this, "No user mobile found. Cannot forward calls", Toast.LENGTH_SHORT).show()
+            return
+        }
+        userId = mobile
+
+//        user.getIdToken(true).addOnCompleteListener{
+//            task ->
+//            if (task.isSuccessful) {
+//                val tokenResult = task.result?.token
+//                if (tokenResult != null) {
+//                    token = tokenResult
+//                    return@addOnCompleteListener
+//                }
+//            }
+//
+//            Timber.d("Error loading token, ${task.exception}")
+//            Toast.makeText(this, "Could not load token", Toast.LENGTH_SHORT).show()
+//        }
+
+        user.getIdToken(true).addOnCompleteListener{
+            task ->
+                if (task.isSuccessful) {
+                    println("Got token")
+                    val token = task.result?.token
+
+                    sendHttpPost(token)
+                    incrementCallCount(userId)
+
+                    return@addOnCompleteListener
+                }
+
+            Timber.d("Error ${task.exception}")
+            Toast.makeText(this, "Error doing stuff", Toast.LENGTH_SHORT).show()
+        }
+        .addOnFailureListener{err ->
+            Timber.d("Error $err")
+            Toast.makeText(this, "Error doing stuff", Toast.LENGTH_SHORT).show()
+        }
+
+    }
+
+
 
     /**
      * Send a POST about the missed call
@@ -143,13 +178,22 @@ class CallActivity : AppCompatActivity() {
             "wait": 30
         }
      */
-    fun sendHttpPost() {
+    fun sendHttpPost(token: String?) {
         val body = "{\"unformattedMobile\":\"$number\",\n \"url\":\"$triggerUrlString\",\n\"wait\": $waitTime,\n \"botId\":\"$botId\"}";
-        println("sending http post to url $urlString")
-        println("body is $body")
+//        val headers =  HashMap<String, Any>()
+//        headers["Authentication"] = "Bearer $token"
+
+        if (token == null) {
+            Toast.makeText(this, "Token could not be found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Timber.d("sending http post to url $urlString")
+        Timber.d("body is $body")
         Fuel.post(urlString)
             .timeout(60000)
             .jsonBody(body)
+            .header(AUTHORIZATION to "Bearer $token")
             .responseString { request, response, result ->
             result.fold({ d ->
                 //TODO: toast
@@ -174,10 +218,6 @@ class CallActivity : AppCompatActivity() {
                 .let(context::startActivity)
         }
 
-        private const val URL_STRING = "url_string"
-        private const val TRIGGER_URL_STRING = "trigger_url_string"
-        private const val BOT_ID = "bot_id"
-        private const val WAIT_TIME = "wait_time"
     }
 
 }

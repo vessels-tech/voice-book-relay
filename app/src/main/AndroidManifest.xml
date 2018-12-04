@@ -15,8 +15,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name="tech.vessels.relay.DialerActivity"
-            android:windowSoftInputMode="stateAlwaysVisible|adjustResize">
+            android:name="tech.vessels.relay.DialerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
