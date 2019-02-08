@@ -6,22 +6,19 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.telecom.Call
+import android.util.Log
 import android.widget.Toast
 import androidx.core.view.isVisible
 import com.crashlytics.android.Crashlytics
-import com.firebase.ui.auth.AuthUI
 import com.github.kittinunf.fuel.Fuel
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
 import com.google.common.net.HttpHeaders.AUTHORIZATION
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
-import com.squareup.okhttp.Headers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
-import kotlinx.android.synthetic.main.activity_call.*
 import tech.vessels.relay.FirebaseApi.Companion.incrementCallCount
 import tech.vessels.relay.RemoteConfigApi.BOT_ID
 import tech.vessels.relay.RemoteConfigApi.TRIGGER_URL_STRING
@@ -46,10 +43,15 @@ class CallActivity : AppCompatActivity() {
     private var waitTime: Double = 10.00
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Crashlytics.log(Log.DEBUG, "CallActivity.onCreate()", "start")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_call)
 
+        Crashlytics.log(Log.DEBUG, "CallActivity.onCreate()", "intent is: " + intent.data)
+
         number = intent.data.schemeSpecificPart
+        Crashlytics.log(Log.DEBUG, "CallActivity.onCreate()", "number is: " + number)
+
 
         remoteConfig = RemoteConfigApi.getRemoteConfig()
         RemoteConfigApi.updateRemoteConfig(this, remoteConfig)
