@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity
 import android.telecom.Call
 import android.widget.Toast
 import androidx.core.view.isVisible
+import com.crashlytics.android.Crashlytics
 import com.firebase.ui.auth.AuthUI
 import com.github.kittinunf.fuel.Fuel
 import com.google.android.gms.tasks.OnCompleteListener
@@ -134,8 +135,7 @@ class CallActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     println("Got token")
                     val token = task.result?.token
-
-                    sendHttpPost(token)
+                    Crashlytics.getInstance().crash() // Force a crash
                     incrementCallCount(userId)
 
                     return@addOnCompleteListener

@@ -54,7 +54,7 @@ class DialerActivity : AppCompatActivity() {
            setUpUser(user)
         } else {
             // No user is signed in
-            println("no user found")
+            Timber.d("no user found")
             createSignInIntent()
         }
 
@@ -130,6 +130,7 @@ class DialerActivity : AppCompatActivity() {
         botId = remoteConfig.getString(RemoteConfigApi.BOT_ID)
         waitTime = remoteConfig.getDouble(RemoteConfigApi.WAIT_TIME)
 
+        Timber.d("Setting url string to ", urlString);
         url.setText(urlString);
     }
 
