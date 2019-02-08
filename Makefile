@@ -8,6 +8,7 @@ dir = $(shell pwd)
 
 build:
 	@echo 'Building debug only'
+	./env/increment_build.sh
 	./gradlew assembleDebug --stacktrace
 
 install-android:
@@ -24,7 +25,7 @@ build-and-install-production:
 
 hockey:
 	source ${dir}/env/.env.deployment.sh && \
-	cd ${dir}/android/fastlane && \
+	cd ${dir}/fastlane && \
 	fastlane upload_hockey
 
 

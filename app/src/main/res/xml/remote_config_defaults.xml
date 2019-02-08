@@ -3,11 +3,11 @@
 <defaultsMap>
     <entry>
         <key>url_string</key>
-        <value>http://localhost:5000</value>
+        <value>https://us-central1-tz-phone-book-dev.cloudfunctions.net/admin/triggerCallFromRelay</value>
     </entry>
     <entry>
         <key>trigger_url_string</key>
-        <value>http://localhost:5000</value>
+        <value>https://us-central1-tz-phone-book-dev.cloudfunctions.net/twiml/voicebook/entrypoint</value>
     </entry>
     <entry>
         <key>bot_id</key>

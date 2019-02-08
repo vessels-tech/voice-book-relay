@@ -135,7 +135,6 @@ class CallActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     println("Got token")
                     val token = task.result?.token
-                    Crashlytics.getInstance().crash() // Force a crash
                     incrementCallCount(userId)
 
                     return@addOnCompleteListener
