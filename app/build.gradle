@@ -2,14 +2,19 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'io.fabric'
+
+def applicationIdEnv = System.getenv('PACKAGE_NAME_PREFIX') ?: "tech.vessels"
+def applicationIdSuffixEnv = System.getenv('PACKAGE_NAME_PREFIX') ?: "relay"
+
 android {
     compileSdkVersion 27
     defaultConfig {
-        applicationId "tech.vessels.relay"
+        applicationId applicationIdEnv
+        applicationIdSuffix applicationIdSuffixEnv
         minSdkVersion 23
         targetSdkVersion 27
-        versionCode 1
-        versionName "1.0"
+        versionName System.getenv('versionName')
+        versionCode Integer.valueOf(System.env.versionCode ?: 0)
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
