@@ -62,6 +62,22 @@
             android:text="123"
             android:textAppearance="@android:style/TextAppearance.Material.Body2" />
 
+        <TextView
+            android:id="@+id/country_code_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Country Code:"
+            android:textAppearance="@android:style/TextAppearance.Material.Subhead" />
+
+        <TextView
+            android:id="@+id/country_code"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="unknown"
+            android:textAppearance="@android:style/TextAppearance.Material.Display1" />
+
+
+
 
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

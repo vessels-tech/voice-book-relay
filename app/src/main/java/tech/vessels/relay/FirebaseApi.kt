@@ -3,10 +3,10 @@ package tech.vessels.relay
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.model.Document
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.HttpsCallableResult
-import kotlinx.android.synthetic.main.activity_dialer.*
 import timber.log.Timber
 
 class FirebaseApi {
@@ -19,7 +19,7 @@ class FirebaseApi {
          *
          * /relay/voicebook/user/+61410237238
          */
-        fun getCallCount(userId: String): Task<DocumentSnapshot> {
+        fun getUserDocument(userId: String): Task<DocumentSnapshot> {
             val db = FirebaseFirestore.getInstance()
             val ref = db.collection("relay").document("voicebook").collection("user").document(userId)
 
@@ -33,7 +33,7 @@ class FirebaseApi {
             val db = FirebaseFirestore.getInstance()
             val ref = db.collection("relay").document("voicebook").collection("user").document(userId)
 
-            val currentCountTask = getCallCount(userId)
+            val currentCountTask = getUserDocument(userId)
             return currentCountTask.addOnCompleteListener{ task: Task<DocumentSnapshot> ->
                 if (task.isSuccessful && task.result != null) {
                     var currentCount = task.result?.data?.get("callCount")
@@ -47,7 +47,7 @@ class FirebaseApi {
 
                     val data = HashMap<String, Any>()
                     data["callCount"] = currentCount
-                    ref.set(HashMap(data))
+                    ref.set(HashMap(data), SetOptions.merge())
                         .addOnSuccessListener { println("DocumentSnapshot successfully written!") }
                         .addOnFailureListener { e -> println("Error writing document $e") }
 

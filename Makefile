@@ -28,5 +28,10 @@ hockey:
 	cd ${dir}/fastlane && \
 	fastlane upload_hockey
 
+#Ref: https://stackoverflow.com/a/49595693/1539479
+clean-idea:
+	rm -rf .idea
+	rm -rf build/
+	rm -rf app/build
 
 .PHONY: build build-production

@@ -1,5 +1,4 @@
 package tech.vessels.relay
-import android.Manifest.permission.CALL_PHONE
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -22,7 +21,8 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import kotlinx.android.synthetic.main.activity_dialer.*
-import tech.vessels.relay.FirebaseApi.Companion.getCallCount
+import tech.vessels.relay.FirebaseApi.Companion.getUserDocument
+import tech.vessels.relay.R.id.counter_label
 import timber.log.Timber
 
 class DialerActivity : AppCompatActivity() {
@@ -73,10 +73,15 @@ class DialerActivity : AppCompatActivity() {
         device_id.text = mobile
 
         if (mobile != null) {
-            val callCountTask = getCallCount(mobile);
+            val callCountTask = getUserDocument(mobile);
             callCountTask.addOnCompleteListener{ task: Task<DocumentSnapshot> ->
                 if (task.isSuccessful && task.result != null && task.result?.data?.get("callCount") != null) {
                     counter_label.text = task.result?.data?.get("callCount").toString()
+                } else {
+                    println("Could not get the latest callCount")
+                }
+                if (task.isSuccessful && task.result != null && task.result?.data?.get("countryCode") != null) {
+                    country_code.text = task.result?.data?.get("countryCode").toString()
                 } else {
                     println("Could not get the latest callCount")
                 }

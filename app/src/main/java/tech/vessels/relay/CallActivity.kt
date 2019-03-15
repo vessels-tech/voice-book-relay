@@ -1,6 +1,7 @@
 package tech.vessels.relay
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -19,12 +20,14 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
+import kotlinx.android.synthetic.main.activity_call.*
 import tech.vessels.relay.FirebaseApi.Companion.incrementCallCount
 import tech.vessels.relay.RemoteConfigApi.BOT_ID
 import tech.vessels.relay.RemoteConfigApi.TRIGGER_URL_STRING
 import tech.vessels.relay.RemoteConfigApi.URL_STRING
 import tech.vessels.relay.RemoteConfigApi.WAIT_TIME
 import timber.log.Timber
+import java.lang.Exception
 import java.util.concurrent.TimeUnit
 
 class CallActivity : AppCompatActivity() {
@@ -47,10 +50,22 @@ class CallActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_call)
 
-        Crashlytics.log(Log.DEBUG, "CallActivity.onCreate()", "intent is: " + intent.data)
+        Crashlytics.log(Log.DEBUG, "CallActivity.onCreate()", "post layout")
+//        Crashlytics.log(Log.DEBUG, "CallActivity.onCreate()", "intent is: " + intent.data)
 
-        number = intent.data.schemeSpecificPart
+        //TODO: this might be null
+        try {
+            Crashlytics.log(Log.DEBUG, "CallActivity.onCreate()", "intent is: " + intent)
+            Crashlytics.log(Log.DEBUG, "CallActivity.onCreate()", "intent.data is: " + intent.data)
+        } catch (exception: Exception) {
+            Crashlytics.log(Log.DEBUG, "CallActivity.catch", exception.message)
+
+        }
+
+//        number = intent.data.schemeSpecificPart
+        number = getIntent().getData().schemeSpecificPart;
         Crashlytics.log(Log.DEBUG, "CallActivity.onCreate()", "number is: " + number)
+
 
 
         remoteConfig = RemoteConfigApi.getRemoteConfig()
@@ -60,6 +75,9 @@ class CallActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+//        number = intent.data.schemeSpecificPart
+//        Crashlytics.log(Log.DEBUG, "CallActivity.onStart()", "intent is: " + intent.data)
+
 
         answer.setOnClickListener {
             OngoingCall.answer()
@@ -137,6 +155,7 @@ class CallActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     println("Got token")
                     val token = task.result?.token
+                    sendHttpPost(token)
                     incrementCallCount(userId)
 
                     return@addOnCompleteListener
@@ -161,13 +180,14 @@ class CallActivity : AppCompatActivity() {
      *
      * Body: {
      *      "botId": "voicebook,
-            "unformattedMobile": "+61410237238",
+            "unformattedMobile": "+6132314237",
             "url": "https://us-central1-tz-phone-book-dev.cloudfunctions.net/twiml/entrypoint",
-            "wait": 30
+            "wait": 30,
+            "userId": +61234234234,
         }
      */
     fun sendHttpPost(token: String?) {
-        val body = "{\"unformattedMobile\":\"$number\",\n \"url\":\"$triggerUrlString\",\n\"wait\": $waitTime,\n \"botId\":\"$botId\"}";
+        val body = "{\"unformattedMobile\":\"$number\",\n \"url\":\"$triggerUrlString\",\n\"wait\": $waitTime,\n \"botId\":\"$botId\",\n\"userId\":\"$userId\"}";
         if (token == null) {
             Toast.makeText(this, "Token could not be found", Toast.LENGTH_SHORT).show()
             return
