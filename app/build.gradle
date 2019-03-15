@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'io.fabric'
 
 def applicationIdEnv = System.getenv('PACKAGE_NAME_PREFIX') ?: "tech.vessels"
-def applicationIdSuffixEnv = System.getenv('PACKAGE_NAME_PREFIX') ?: "relay"
+def applicationIdSuffixEnv = System.getenv('PACKAGE_NAME_SUFFIX') ?: "relay"
 
 android {
     compileSdkVersion 27

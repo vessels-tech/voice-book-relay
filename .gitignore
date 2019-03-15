@@ -136,3 +136,4 @@ fabric.properties
 
 **/google-services*
 env/.*
+*.keystore
